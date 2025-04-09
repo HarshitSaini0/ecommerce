@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { setCart, clearCart ,removeProductFromCart,addProductToCart} from '../store/cartSlice';
+import { setCart, clearCart ,removeProductFromCart,addProductToCart,calculateAndUpdateTotal } from '../store/cartSlice';
 import cartServices from '../appwrite/cart.js';
 import { Link } from 'react-router-dom';
 
@@ -58,6 +58,7 @@ const Cart = () => {
       dispatch(addProductToCart(
         productId
       ));
+      dispatch(calculateAndUpdateTotal())
     } catch (error) {
       console.error('Failed to update cart quantity:', error);
     }
@@ -79,6 +80,7 @@ const Cart = () => {
 
       // Update local state
       dispatch(removeProductFromCart(productId));
+      dispatch(calculateAndUpdateTotal())
     } catch (error) {
       console.error('Failed to remove item from cart:', error);
     }
@@ -152,7 +154,7 @@ const Cart = () => {
       
       <div className="mt-6 p-4 border-t">
         <div className="flex justify-between items-center">
-          <h2 className="text-xl font-semibold">Total: ${cart.totalAmount.toFixed(2)}</h2>
+          <h2 className="text-xl font-semibold">Total: Rs. {cart.totalAmount}</h2>
           <div className="space-x-2">
             <button 
               onClick={handleClearCart}

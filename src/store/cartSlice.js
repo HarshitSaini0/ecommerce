@@ -1,5 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import Cookies from 'js-cookie';
+import productServices from '../appwrite/product.js';
 
 // Helper functions for cookie management
 const CART_COOKIE_NAME = 'cartData';
@@ -12,6 +13,8 @@ const getCartFromCookies = () => {
     products: [],
     productsQuantity: [],
     totalAmount: 0,
+    loading: false,
+    error: null
   };
 };
 
@@ -35,6 +38,8 @@ const cartSlice = createSlice({
       state.products = action.payload.productsId || [];
       state.productsQuantity = action.payload.productQuantity || [];
       state.totalAmount = action.payload.totalAmount || 0;
+      state.loading = false;
+      state.error = null;
       saveCartToCookies(state);
     },
     addProductToCart(state, action) {
@@ -50,19 +55,28 @@ const cartSlice = createSlice({
       } else {
         state.productsQuantity[index] += 1;
       }
+      state.loading = true; // Set loading state while fetching prices
       saveCartToCookies(state);
     },
     removeProductFromCart(state, action) {
-      state.products = state.products.filter((p, i) => {
+      const newProducts = [];
+      const newQuantities = [];
+      
+      state.products.forEach((p, i) => {
         if (p === action.payload) {
-          state.productsQuantity[i] -= 1;
-          if (state.productsQuantity[i] <= 0) {
-            state.productsQuantity.splice(i, 1);
-            return false;
+          if (state.productsQuantity[i] > 1) {
+            newProducts.push(p);
+            newQuantities.push(state.productsQuantity[i] - 1);
           }
+        } else {
+          newProducts.push(p);
+          newQuantities.push(state.productsQuantity[i]);
         }
-        return true;
       });
+      
+      state.products = newProducts;
+      state.productsQuantity = newQuantities;
+      state.loading = true; // Set loading state while fetching prices
       saveCartToCookies(state);
     },
     clearCart(state) {
@@ -71,11 +85,61 @@ const cartSlice = createSlice({
       state.products = [];
       state.productsQuantity = [];
       state.totalAmount = 0;
+      state.loading = false;
+      state.error = null;
       Cookies.remove(CART_COOKIE_NAME);
     },
+    updateTotalAmount(state, action) {
+      state.totalAmount = action.payload;
+      state.loading = false;
+      saveCartToCookies(state);
+    },
+    setError(state, action) {
+      state.error = action.payload;
+      state.loading = false;
+      saveCartToCookies(state);
+    }
   },
 });
 
-export const { setCart, addProductToCart, removeProductFromCart, clearCart } =
-  cartSlice.actions;
+// Thunk action to calculate total amount asynchronously
+export const calculateAndUpdateTotal = () => async (dispatch, getState) => {
+  const { products, productsQuantity } = getState().cart;
+  
+  if (products.length === 0) {
+    dispatch(updateTotalAmount(0));
+    return;
+  }
+
+  try {
+    // First get the array of price promises
+    const pricePromises = await productServices.getProductsPrice(products);
+    
+    // Wait for all promises to resolve
+    const productPrices = await Promise.all(pricePromises);
+    console.log(productPrices);
+    console.log(pricePromises);
+    
+    
+    // Now calculate with actual prices
+    const total = products.reduce((sum, _, index) => {
+      return sum + (productPrices[index] * productsQuantity[index]);
+    }, 0);
+    
+    dispatch(updateTotalAmount(total));
+  } catch (error) {
+    dispatch(setError(error.message));
+  }
+};
+
+// Export the regular actions
+export const { 
+  setCart, 
+  addProductToCart, 
+  removeProductFromCart, 
+  clearCart,
+  updateTotalAmount,
+  setError
+} = cartSlice.actions;
+
 export default cartSlice.reducer;

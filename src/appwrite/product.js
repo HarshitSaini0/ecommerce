@@ -43,7 +43,9 @@ class ProductServices {
         if (!result.price) {
           return null;
         }
-        return result.price.documents;
+        console.log(result);
+        
+        return result.price;
       });
      
       
