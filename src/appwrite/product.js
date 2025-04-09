@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { Account, Client, Databases, ID } from "appwrite";
+import { Account, Client, Databases, ID, Query } from "appwrite";
 import conf from "../conf/conf.js";
 
 class ProductServices {
@@ -29,6 +29,29 @@ class ProductServices {
       console.error("Get all products failed:", error);
       throw error;
     }
+  }
+
+  async  getProductsPrice(products) {
+    try {
+       const productsPrice = products.map(async (product) => {
+        const result = await this.databases.getDocument(
+          conf.databaseId, // databaseId
+          conf.productsCollectionId, // collectionId
+          product, // documentId
+          [Query.select(['price'])] // filters (optional)
+        );
+        if (!result.price) {
+          return null;
+        }
+        return result.price.documents;
+      });
+     
+      
+      return productsPrice;
+      } catch (error) {
+        console.error("Get products price failed:", error);
+        throw error;
+      }
   }
 
   async getProduct(productId) {

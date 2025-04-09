@@ -4,8 +4,7 @@ import { createSlice } from "@reduxjs/toolkit";
 const initialSlice = {
     status: false,
     userData: {
-       // Add photoUrl
-        likedPostsCount: 0, // Add likedPostsCount
+      
     },
     loading: false,
     error: null

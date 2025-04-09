@@ -11,6 +11,8 @@ import Home from "./pages/Home.jsx";
 import loginAndSignUp from "./pages/loginAndSignUp.jsx";
 import LoginAndSignUp from "./pages/loginAndSignUp.jsx";
 import VerifiyEmail from "./pages/VerifiyEmail.jsx";
+import Cart from "./pages/Cart.jsx";
+import ProductsPage from "./pages/ProductsPage.jsx";
 
 
 const router = createBrowserRouter([
@@ -28,6 +30,14 @@ const router = createBrowserRouter([
           element: <LoginAndSignUp/>
 
         },
+        {
+          path:'/cart',
+          element: <Cart/>,
+        },
+        {
+          path: '/products',
+          element:<ProductsPage/>,
+          },
        
     ],
   },
